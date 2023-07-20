@@ -15,8 +15,9 @@ def mount_mods(mods_dir: str, game_dir: str, mount_dir: str, priority_file: str)
         priority_list = f.read().splitlines()
 
     priority_dict = {mod: priority_list.index(mod) if mod in priority_list else len(priority_list) for mod in mods}
+    print(priority_dict)
 
-    mods_list.sort(key=lambda mod: priority_dict[os.path.basename(mod)])
+    mods_list.sort(key=lambda mod: priority_dict[os.path.basename(mod)], reverse=True)
 
     mods_string = ":".join(mods_list) + ":" + game_dir
     logger.log.debug(mods_string)
