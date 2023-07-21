@@ -9,6 +9,13 @@ from PySide6.QtWidgets import (
     QPushButton
 )
 
+import filesystem
+
+MODS_DIR = "/home/bogdan/Documents/Projects/mod-manager-py/test/mods_2"
+GAME_DIR = "/home/bogdan/.local/share/Steam/steamapps/common/Skyrim Special Edition"
+MOUNT_DIR = "test/mount"
+PRIORITY_FILE = "profile/mods_priority.txt"
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -23,6 +30,14 @@ class MainWindow(QMainWindow):
 
         install_button = QPushButton("Install Mod")
         nav_layout.addWidget(install_button)
+
+        mount_button = QPushButton("Mount")
+        mount_button.clicked.connect(lambda: filesystem.mount_mods(MODS_DIR, GAME_DIR, MOUNT_DIR, PRIORITY_FILE))
+        nav_layout.addWidget(mount_button)
+
+        unmount_button = QPushButton("Unmount")
+        unmount_button.clicked.connect(lambda: filesystem.unmount_mods(MOUNT_DIR))
+        nav_layout.addWidget(unmount_button)
 
         start_button = QPushButton("Start Game")
         nav_layout.addWidget(start_button)
