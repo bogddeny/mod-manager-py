@@ -60,11 +60,10 @@ def extract(archive_path: str, extract_path: str):
         command = ["7z", "x", "-y", archive_path, f"-o{extract_path}"]
     else:
         logger.log.debug("Unsupported archive format. Only .zip .rar and .7z are supported")
-        return False
+        return
 
     try:
         subprocess.run(command, check=True)
-        return True
+        logger.log.debug(f"Successfully extracted '{archive_path}' to '{extract_path}'.")
     except subprocess.CalledProcessError:
         logger.log.debug("Failed to extract archive")
-        return False

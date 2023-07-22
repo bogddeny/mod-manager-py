@@ -8,6 +8,9 @@ from PySide6.QtWidgets import (
     QHeaderView,
     QPushButton
 )
+from PySide6.QtCore import QThread, Signal
+
+import threading
 
 import filesystem
 
@@ -15,6 +18,20 @@ MODS_DIR = "/home/bogdan/Documents/Projects/mod-manager-py/test/mods_2"
 GAME_DIR = "/home/bogdan/.local/share/Steam/steamapps/common/Skyrim Special Edition"
 MOUNT_DIR = "test/mount"
 PRIORITY_FILE = "profile/mods_priority.txt"
+
+
+class ExtractionThread(QThread):
+    finished = Signal()
+
+    def __init__(self, archive_path: str, extract_path: str):
+        super().__init__()
+        self.archive_path = archive_path
+        self.extract_path = extract_path
+
+    def run(self):
+        filesystem.extract(self.archive_path, self.extract_path)
+        self.finished.emit()
+
 
 
 class MainWindow(QMainWindow):
@@ -27,9 +44,9 @@ class MainWindow(QMainWindow):
 
         button_layout = QHBoxLayout()
 
-        install_button = QPushButton("Install Mod")
-        install_button.clicked.connect(self.start_mod_installation)
-        button_layout.addWidget(install_button)
+        self.install_button = QPushButton("Install Mod")
+        self.install_button.clicked.connect(self.start_mod_installation)
+        button_layout.addWidget(self.install_button)
 
         start_button = QPushButton("Start Game")
         button_layout.addWidget(start_button)
@@ -73,11 +90,22 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
     def start_mod_installation(self):
+        self.install_button.setText("Installing")
+        self.install_button.setEnabled(False)
         options = QFileDialog.Options()
         file_path, _ = QFileDialog.getOpenFileName(self, "Select Mod File", "", "All Files (*)", options=options)
         extract_to = ".temp/"
 
         if file_path:
             print("Selected File: ", file_path)
-            filesystem.extract(file_path, extract_to)
+            self.extraction_thread = ExtractionThread(file_path, extract_to)
+            self.extraction_thread.finished.connect(self.on_extraction_thread_finished)
+            self.extraction_thread.start()
+            # extraction_thread = threading.Thread(target=filesystem.extract, args=(file_path, extract_to))
+            # extraction_thread.start()
+            # filesystem.extract(file_path, extract_to)
+
+    def on_extraction_thread_finished(self):
+        self.install_button.setText("Install Mod")
+        self.install_button.setEnabled(True)
 
