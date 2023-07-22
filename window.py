@@ -90,14 +90,14 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
     def start_mod_installation(self):
-        self.install_button.setText("Installing")
-        self.install_button.setEnabled(False)
         options = QFileDialog.Options()
         file_path, _ = QFileDialog.getOpenFileName(self, "Select Mod File", "", "All Files (*)", options=options)
         extract_to = ".temp/"
 
         if file_path:
             print("Selected File: ", file_path)
+            self.install_button.setText("Installing")
+            self.install_button.setEnabled(False)
             self.extraction_thread = ExtractionThread(file_path, extract_to)
             self.extraction_thread.finished.connect(self.on_extraction_thread_finished)
             self.extraction_thread.start()
