@@ -3,3 +3,4 @@ manager.log
 venv/
 __pycache__/
 .idea/
+.temp/

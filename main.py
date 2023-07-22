@@ -10,5 +10,5 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     win = window.MainWindow()
     win.show()
-    app.aboutToQuit.connect(print("handle about to quit later"))
+    app.aboutToQuit.connect(lambda: print("handle about to quit later"))
     sys.exit(app.exec())

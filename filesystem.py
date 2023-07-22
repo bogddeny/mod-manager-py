@@ -2,6 +2,10 @@ import os
 
 from subprocess import Popen, PIPE
 
+import zipfile
+import rarfile
+import py7zr
+
 import logger
 
 
@@ -44,3 +48,23 @@ def process_wait(process: Popen[bytes]):
         print(stdout.decode().strip())
     if len(stderr) > 0:
         print(stderr.decode().strip())
+
+
+def extract(archive_path: str, extract_path: str):
+    if not os.path.exists(extract_path):
+        os.mkdir(extract_path)
+
+    if archive_path.endswith('.zip'):
+        with zipfile.ZipFile(archive_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_path)
+        logger.log.debug(f"Successfully extracted zip file: {archive_path} to {extract_path}")
+    elif archive_path.endswith('.rar'):
+        with rarfile.RarFile(archive_path, 'r') as rar_ref:
+            rar_ref.extractall(extract_path)
+        logger.log.debug(f"Successfully extracted rar file: {archive_path} to {extract_path}")
+    elif archive_path.endswith('.7z'):
+        with py7zr.SevenZipFile(archive_path, mode='r') as sz_ref:
+            sz_ref.extractall(extract_path)
+        logger.log.debug(f"Successfully extracted 7z file: {archive_path} to {extract_path}")
+    else:
+        logger.log.debug("Unsupported archive format. Only .zip .rar and .7z are supported")
