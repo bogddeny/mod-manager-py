@@ -75,7 +75,7 @@ class MainWindow(QMainWindow):
     def start_mod_installation(self):
         options = QFileDialog.Options()
         file_path, _ = QFileDialog.getOpenFileName(self, "Select Mod File", "", "All Files (*)", options=options)
-        extract_to = "/home/bogdan/Documents/Projects/mod-manager-py/.temp"
+        extract_to = ".temp/"
 
         if file_path:
             print("Selected File: ", file_path)
