@@ -1,8 +1,7 @@
 import os
-
-from subprocess import Popen, PIPE
-
 import subprocess
+import pyfomod
+from subprocess import Popen, PIPE
 
 import logger
 
@@ -67,3 +66,30 @@ def extract(archive_path: str, extract_path: str):
         logger.log.debug(f"Successfully extracted '{archive_path}' to '{extract_path}'.")
     except subprocess.CalledProcessError:
         logger.log.debug("Failed to extract archive")
+
+
+def fomod_test(path: str):
+    root = pyfomod.parse(path)
+    installer = pyfomod.Installer(root, path)
+
+    try:
+        page = installer.next()
+
+        if page is None:
+            print("Installer finished!")
+
+        # Print the current page name
+        print("Current Page:", page.name)
+
+        # Iterate through the groups on the page
+        for group in page:
+            print("Group:", group.name)
+
+            # Iterate through the options in the group
+            for option in group:
+                print("Option:", option.name)
+                print("Description:", option.description)
+
+    except pyfomod.FailedCondition as e:
+        print(f"FailedCondition: {e}")
+

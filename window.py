@@ -12,6 +12,7 @@ from PySide6.QtCore import QThread, Signal
 
 import threading
 
+import fomod
 import filesystem
 
 MODS_DIR = "/home/bogdan/Documents/Projects/mod-manager-py/test/mods_2"
@@ -33,7 +34,6 @@ class ExtractionThread(QThread):
         self.finished.emit()
 
 
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -47,6 +47,10 @@ class MainWindow(QMainWindow):
         self.install_button = QPushButton("Install Mod")
         self.install_button.clicked.connect(self.start_mod_installation)
         button_layout.addWidget(self.install_button)
+
+        fomod_button = QPushButton("fomod")
+        fomod_button.clicked.connect(lambda: fomod.read_fomod("/home/bogdan/Documents/Projects/mod-manager-py/.temp/"))
+        button_layout.addWidget(fomod_button)
 
         start_button = QPushButton("Start Game")
         button_layout.addWidget(start_button)
