@@ -68,10 +68,11 @@ def extract(archive_path: str, extract_path: str):
         logger.log.debug("Failed to extract archive")
 
 
+""" TODO: Remove this later
 def fomod_test(path: str):
     root = pyfomod.parse(path)
     installer = pyfomod.Installer(root, path)
-
+    print(installer.files())
     try:
         page = installer.next()
 
@@ -84,12 +85,17 @@ def fomod_test(path: str):
         # Iterate through the groups on the page
         for group in page:
             print("Group:", group.name)
+            print(group.type)
 
             # Iterate through the options in the group
             for option in group:
                 print("Option:", option.name)
                 print("Description:", option.description)
 
-    except pyfomod.FailedCondition as e:
-        print(f"FailedCondition: {e}")
+        selected_option = "Curvy"
+        installer.next([opt])
+        print(installer.files())
 
+    except pyfomod.FailedCondition as e:
+        logger.log.debug(f"FailedCondition: {e}")
+"""

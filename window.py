@@ -10,8 +10,6 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import QThread, Signal
 
-import threading
-
 import fomod
 import filesystem
 
@@ -49,7 +47,8 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(self.install_button)
 
         fomod_button = QPushButton("fomod")
-        fomod_button.clicked.connect(lambda: fomod.read_fomod("/home/bogdan/Documents/Projects/mod-manager-py/.temp/"))
+        fomod_dialog = fomod.FomodDialog("/home/bogdan/Documents/Projects/mod-manager-py/.temp/")
+        fomod_button.clicked.connect(lambda: fomod_dialog.exec())
         button_layout.addWidget(fomod_button)
 
         start_button = QPushButton("Start Game")
@@ -102,12 +101,9 @@ class MainWindow(QMainWindow):
             print("Selected File: ", file_path)
             self.install_button.setText("Installing")
             self.install_button.setEnabled(False)
-            self.extraction_thread = ExtractionThread(file_path, extract_to)
-            self.extraction_thread.finished.connect(self.on_extraction_thread_finished)
-            self.extraction_thread.start()
-            # extraction_thread = threading.Thread(target=filesystem.extract, args=(file_path, extract_to))
-            # extraction_thread.start()
-            # filesystem.extract(file_path, extract_to)
+            extraction_thread = ExtractionThread(file_path, extract_to)
+            extraction_thread.finished.connect(self.on_extraction_thread_finished)
+            extraction_thread.start()
 
     def on_extraction_thread_finished(self):
         self.install_button.setText("Install Mod")
