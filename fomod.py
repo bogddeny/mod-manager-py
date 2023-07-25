@@ -4,7 +4,11 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QLineEdit
+    QLineEdit,
+    QScrollArea,
+    QWidget,
+    QRadioButton,
+    QCheckBox
 )
 
 import pyfomod
@@ -62,15 +66,11 @@ class FomodDialog(QDialog):
         content_layout = QHBoxLayout()
         main_layout.addLayout(content_layout)
 
-        content_left_layout = QVBoxLayout()
-        content_layout.addLayout(content_left_layout)
-        left_label = QLabel("left")
-        content_left_layout.addWidget(left_label)
+        self.content_left_layout = QVBoxLayout()
+        content_layout.addLayout(self.content_left_layout)
 
-        content_right_layout = QVBoxLayout()
-        content_layout.addLayout(content_right_layout)
-        right_label = QLabel("right")
-        content_right_layout.addWidget(right_label)
+        self.content_right_layout = QVBoxLayout()
+        content_layout.addLayout(self.content_right_layout)
 
         controls_layout = QHBoxLayout()
         main_layout.addLayout(controls_layout)
@@ -83,12 +83,87 @@ class FomodDialog(QDialog):
 
         self.setLayout(main_layout)
 
+        self.installer = None
+
+        self.initialize_installer(path)
+
+        self.get_next_page_layout(self.installer)
+
+    def initialize_installer(self, path):
         root = pyfomod.parse(path)
-        installer = pyfomod.Installer(root, path)
+        self.installer = pyfomod.Installer(root, path)
+
+    def get_next_page_layout(self, installer):
         page = get_page(installer)
         groups = get_groups(page)
+
+        scroll_area = QScrollArea()
+        page_widget = QWidget(scroll_area)
+        scroll_area.setWidget(page_widget)
+        scroll_area.setWidgetResizable(True)
+        content_layout = QVBoxLayout(page_widget)
+        self.content_right_layout.addWidget(scroll_area)
+
         for group in groups:
+            label = QLabel("----- " + group.name + " -----")
+            content_layout.addWidget(label)
+
             options = get_options(group)
             for option in options:
-                print("Option:", option.name)
-                print("Description:", option.description)
+                if group.type is pyfomod.GroupType.ALL:
+                    button = QCheckBox(option.name)
+                    button.setToolTip(option.description)
+                    button.setChecked(True)
+                    button.setEnabled(False)
+                    content_layout.addWidget(button)
+                if group.type is pyfomod.GroupType.ANY:
+                    button = QCheckBox(option.name)
+                    button.setToolTip(option.description)
+                    content_layout.addWidget(button)
+                if group.type is pyfomod.GroupType.ATMOSTONE:
+                    button = QRadioButton(option.name)
+                    button.setToolTip(option.description)
+                    content_layout.addWidget(button)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
