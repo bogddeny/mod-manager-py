@@ -8,7 +8,8 @@ from PySide6.QtWidgets import (
     QScrollArea,
     QWidget,
     QRadioButton,
-    QCheckBox
+    QCheckBox,
+    QButtonGroup
 )
 
 import pyfomod
@@ -109,33 +110,67 @@ class FomodDialog(QDialog):
         for group in groups:
             label = QLabel("----- " + group.name + " -----")
             content_layout.addWidget(label)
+            local_layout = QVBoxLayout()
+            group_atmostone_selected = []
+            button_group_most = QButtonGroup()
 
             options = get_options(group)
             for option in options:
                 if group.type is pyfomod.GroupType.ALL:
-                    button = QCheckBox(option.name)
+                    button = QCheckBox(option.name + " all")
                     button.setToolTip(option.description)
                     button.setChecked(True)
                     button.setEnabled(False)
-                    content_layout.addWidget(button)
+                    local_layout.addWidget(button)
                     self.add_selected_option(option)
+
                 if group.type is pyfomod.GroupType.ANY:
-                    button = QCheckBox(option.name)
+                    button = QCheckBox(option.name + " any")
                     button.setToolTip(option.description)
-                    content_layout.addWidget(button)
+                    local_layout.addWidget(button)
                     button.clicked.connect(lambda checked=False, opt=option: self.toggle_selected_option(opt))
+
                 if group.type is pyfomod.GroupType.ATLEASTONE:
-                    button = QRadioButton(option.name)
+                    button = QCheckBox(option.name + " at least one")
                     button.setToolTip(option.description)
-                    content_layout.addWidget(button)
+                    local_layout.addWidget(button)
+                    button.clicked.connect(lambda checked=False, opt=option: self.toggle_selected_option(opt))
+
                 if group.type is pyfomod.GroupType.ATMOSTONE:
-                    button = QRadioButton(option.name)
+                    button = QRadioButton(option.name + " at most one")
                     button.setToolTip(option.description)
-                    content_layout.addWidget(button)
+                    button_group_most.addButton(button)
+                    local_layout.addWidget(button)
+                    button.clicked.connect(lambda checked=False, opt=option: self.handle_atmostone_selection(group_atmostone_selected, opt))
+
                 if group.type is pyfomod.GroupType.EXACTLYONE:
-                    button = QRadioButton(option.name)
+                    button_group = QButtonGroup()
+                    button = QRadioButton(option.name + " exactly one")
                     button.setToolTip(option.description)
-                    content_layout.addWidget(button)
+                    button_group.addButton(button)
+                    local_layout.addWidget(button)
+
+            if group.type is pyfomod.GroupType.ATMOSTONE:
+                button_none = QRadioButton("None")
+                button_group_most.addButton(button_none)
+                local_layout.addWidget(button_none)
+                button_none.clicked.connect(lambda: self.clear_selection(group_atmostone_selected))
+
+            content_layout.addLayout(local_layout)
+
+    def handle_atmostone_selection(self, group_selected_options, option):
+        if not group_selected_options:
+            self.selected_options.append(option)
+            group_selected_options.append(option)
+        else:
+            self.selected_options.remove(group_selected_options[0])
+            group_selected_options.clear()
+            self.selected_options.append(option)
+            group_selected_options.append(option)
+
+    def clear_selection(self, group_selected_options):
+        self.selected_options.remove(group_selected_options[0])
+        group_selected_options.clear()
 
     def add_selected_option(self, option):
         if option not in self.selected_options:
