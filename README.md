@@ -1,6 +1,6 @@
 # Mod Manager Python
 
-A fuse-overlayfs Mod Manager application for Bethesda games being made in Qt6 for the purpose of having a native-to-linux Mod Manager available without the problems of running other mod management software in wine.
+A (work-in-progress) fuse-overlayfs Mod Manager application for Bethesda games being made in Qt6 for the purpose of having a native-to-linux mod manager available without the problems of running other mod management software in wine.
 
 ## Requirements
 
