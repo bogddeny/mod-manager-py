@@ -14,3 +14,11 @@ These are the packages required from your distribution's package manager
 ## Running the software
 
 ```python main.py```
+
+## Still not done:
+
+[ ] add option imaga viewer to install dialog
+[ ] add option description to install dialog
+[ ] add installer copy logicreworked group type handling, now every case works ( I think )
+[ ] add installer mod info reading
+[ ] finish mods display in main table
