@@ -77,6 +77,7 @@ class FomodDialog(QDialog):
         previous_button = QPushButton("Previous")
         next_button = QPushButton("Next")
         cancel_button = QPushButton("Cancel")
+        cancel_button.clicked.connect(lambda: print(self.selected_options))
         controls_layout.addWidget(previous_button)
         controls_layout.addWidget(next_button)
         controls_layout.addWidget(cancel_button)
@@ -84,6 +85,7 @@ class FomodDialog(QDialog):
         self.setLayout(main_layout)
 
         self.installer = None
+        self.selected_options = []
 
         self.initialize_installer(path)
 
@@ -116,18 +118,34 @@ class FomodDialog(QDialog):
                     button.setChecked(True)
                     button.setEnabled(False)
                     content_layout.addWidget(button)
+                    self.add_selected_option(option)
                 if group.type is pyfomod.GroupType.ANY:
                     button = QCheckBox(option.name)
+                    button.setToolTip(option.description)
+                    content_layout.addWidget(button)
+                    button.clicked.connect(lambda checked=False, opt=option: self.toggle_selected_option(opt))
+                if group.type is pyfomod.GroupType.ATLEASTONE:
+                    button = QRadioButton(option.name)
                     button.setToolTip(option.description)
                     content_layout.addWidget(button)
                 if group.type is pyfomod.GroupType.ATMOSTONE:
                     button = QRadioButton(option.name)
                     button.setToolTip(option.description)
                     content_layout.addWidget(button)
+                if group.type is pyfomod.GroupType.EXACTLYONE:
+                    button = QRadioButton(option.name)
+                    button.setToolTip(option.description)
+                    content_layout.addWidget(button)
 
+    def add_selected_option(self, option):
+        if option not in self.selected_options:
+            self.selected_options.append(option)
 
-
-
+    def toggle_selected_option(self, option):
+        if option in self.selected_options:
+            self.selected_options.remove(option)
+        else:
+            self.selected_options.append(option)
 
 
 
