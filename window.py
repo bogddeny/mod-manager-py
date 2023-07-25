@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QThread, Signal
 
 import fomod
+import installer
 import filesystem
 
 MODS_DIR = "/home/bogdan/Documents/Projects/mod-manager-py/test/mods_2"
@@ -47,8 +48,8 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(self.install_button)
 
         fomod_button = QPushButton("fomod")
-        fomod_dialog = fomod.FomodDialog("/home/bogdan/Documents/Projects/mod-manager-py/.temp/")
-        fomod_button.clicked.connect(lambda: fomod_dialog.exec())
+        path = "/home/bogdan/Documents/Projects/mod-manager-py/.temp/"
+        fomod_button.clicked.connect(lambda: self.open_installer_dialog(path))
         button_layout.addWidget(fomod_button)
 
         start_button = QPushButton("Start Game")
@@ -91,6 +92,11 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(main_layout)
 
         self.setCentralWidget(central_widget)
+
+    def open_installer_dialog(self, path: str):
+        # dialog = fomod.FomodDialog(path)
+        dialog = installer.InstallerDialog(path)
+        dialog.exec()
 
     def start_mod_installation(self):
         options = QFileDialog.Options()

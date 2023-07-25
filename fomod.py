@@ -16,9 +16,12 @@ import pyfomod
 import logger
 
 
-def get_page(installer):
+def get_page(installer, options=None):
     try:
-        page = installer.next()
+        if options is not None:
+            page = installer.next(options)
+        else:
+            page = installer.next()
         if page is None:
             logger.log.debug("Installer Finished")
         return page
@@ -83,6 +86,7 @@ class FomodDialog(QDialog):
         main_layout.addLayout(controls_layout)
         previous_button = QPushButton("Previous")
         next_button = QPushButton("Next")
+        next_button.clicked.connect(lambda: self.get_next_page_layout(self.installer, True))
         cancel_button = QPushButton("Cancel")
         cancel_button.clicked.connect(lambda: print_selected_options(self.selected_options))
         controls_layout.addWidget(previous_button)
@@ -101,8 +105,15 @@ class FomodDialog(QDialog):
         root = pyfomod.parse(path)
         self.installer = pyfomod.Installer(root, path)
 
-    def get_next_page_layout(self, installer):
-        page = get_page(installer)
+    def get_next_page_layout(self, installer, reset=False):
+        if reset:
+            while self.content_right_layout.count():
+                item = self.content_right_layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    self.content_right_layout.removeWidget(widget)
+                    widget.deleteLater()
+        page = get_page(installer, options=self.selected_options)
         groups = get_groups(page)
 
         scroll_area = QScrollArea()
@@ -141,6 +152,7 @@ class FomodDialog(QDialog):
 
             else:
                 logger.log.error("Invalid fomod GroupType")
+        return scroll_area
 
     def create_all_button_layout(self, options):
         layout = QVBoxLayout()
