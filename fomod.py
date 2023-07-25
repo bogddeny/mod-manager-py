@@ -51,11 +51,17 @@ def get_options(group):
         logger.log.debug(f"Failed Condition: {e}")
 
 
+def print_selected_options(options):
+    for option in options:
+        print(option.name)
+
+
 class FomodDialog(QDialog):
     def __init__(self, path: str):
         super().__init__()
         self.setGeometry(0, 0, 800, 450)
         main_layout = QVBoxLayout()
+        self.selected_options = []
 
         top_bar_layout = QHBoxLayout()
         main_layout.addLayout(top_bar_layout)
@@ -78,7 +84,7 @@ class FomodDialog(QDialog):
         previous_button = QPushButton("Previous")
         next_button = QPushButton("Next")
         cancel_button = QPushButton("Cancel")
-        cancel_button.clicked.connect(lambda: print(self.selected_options))
+        cancel_button.clicked.connect(lambda: print_selected_options(self.selected_options))
         controls_layout.addWidget(previous_button)
         controls_layout.addWidget(next_button)
         controls_layout.addWidget(cancel_button)
@@ -86,7 +92,6 @@ class FomodDialog(QDialog):
         self.setLayout(main_layout)
 
         self.installer = None
-        self.selected_options = []
 
         self.initialize_installer(path)
 
@@ -107,70 +112,109 @@ class FomodDialog(QDialog):
         content_layout = QVBoxLayout(page_widget)
         self.content_right_layout.addWidget(scroll_area)
 
+        self.group_selected = []
+
         for group in groups:
-            label = QLabel("----- " + group.name + " -----")
-            content_layout.addWidget(label)
-            local_layout = QVBoxLayout()
-            group_atmostone_selected = []
-            button_group_most = QButtonGroup()
-
             options = get_options(group)
-            for option in options:
-                if group.type is pyfomod.GroupType.ALL:
-                    button = QCheckBox(option.name + " all")
-                    button.setToolTip(option.description)
-                    button.setChecked(True)
-                    button.setEnabled(False)
-                    local_layout.addWidget(button)
-                    self.add_selected_option(option)
+            group_label = QLabel("----- " + group.name + " -----" + str(group.type))
+            content_layout.addWidget(group_label)
 
-                if group.type is pyfomod.GroupType.ANY:
-                    button = QCheckBox(option.name + " any")
-                    button.setToolTip(option.description)
-                    local_layout.addWidget(button)
-                    button.clicked.connect(lambda checked=False, opt=option: self.toggle_selected_option(opt))
+            if group.type is pyfomod.GroupType.ALL:
+                layout = self.create_all_button_layout(options)
+                content_layout.addLayout(layout)
 
-                if group.type is pyfomod.GroupType.ATLEASTONE:
-                    button = QCheckBox(option.name + " at least one")
-                    button.setToolTip(option.description)
-                    local_layout.addWidget(button)
-                    button.clicked.connect(lambda checked=False, opt=option: self.toggle_selected_option(opt))
+            elif group.type is pyfomod.GroupType.ANY:
+                layout = self.create_any_least_button_layout(options)
+                content_layout.addLayout(layout)
 
-                if group.type is pyfomod.GroupType.ATMOSTONE:
-                    button = QRadioButton(option.name + " at most one")
-                    button.setToolTip(option.description)
-                    button_group_most.addButton(button)
-                    local_layout.addWidget(button)
-                    button.clicked.connect(lambda checked=False, opt=option: self.handle_atmostone_selection(group_atmostone_selected, opt))
+            elif group.type is pyfomod.GroupType.ATLEASTONE:
+                layout = self.create_any_least_button_layout(options)
+                content_layout.addLayout(layout)
 
-                if group.type is pyfomod.GroupType.EXACTLYONE:
-                    button_group = QButtonGroup()
-                    button = QRadioButton(option.name + " exactly one")
-                    button.setToolTip(option.description)
-                    button_group.addButton(button)
-                    local_layout.addWidget(button)
+            elif group.type is pyfomod.GroupType.ATMOSTONE:
+                layout = self.create_most_button_layout(options)
+                content_layout.addLayout(layout)
 
-            if group.type is pyfomod.GroupType.ATMOSTONE:
-                button_none = QRadioButton("None")
-                button_group_most.addButton(button_none)
-                local_layout.addWidget(button_none)
-                button_none.clicked.connect(lambda: self.clear_selection(group_atmostone_selected))
+            elif group.type is pyfomod.GroupType.EXACTLYONE:
+                layout = self.create_exact_button_layout(options)
+                content_layout.addLayout(layout)
 
-            content_layout.addLayout(local_layout)
+            else:
+                logger.log.error("Invalid fomod GroupType")
 
-    def handle_atmostone_selection(self, group_selected_options, option):
-        if not group_selected_options:
+    def create_all_button_layout(self, options):
+        layout = QVBoxLayout()
+        button_group = QButtonGroup(layout)
+        button_group.setExclusive(False)
+
+        for option in options:
+            button = QCheckBox(option.name)
+            button.setToolTip(option.description)
+            button.setChecked(True)
+            button.setEnabled(False)
+            button_group.addButton(button)
+            layout.addWidget(button)
+            self.add_selected_option(option)
+        return layout
+
+    def create_any_least_button_layout(self, options):
+        layout = QVBoxLayout()
+        button_group = QButtonGroup(layout)
+        button_group.setExclusive(False)
+
+        for option in options:
+            button = QCheckBox(option.name)
+            button.setToolTip(option.description)
+            button.clicked.connect(lambda check=False, opt=option: self.toggle_selected_option(opt))
+            button_group.addButton(button)
+            layout.addWidget(button)
+        return layout
+
+    def create_most_button_layout(self, options):
+        layout = QVBoxLayout()
+        button_group = QButtonGroup(layout)
+
+        for option in options:
+            button = QRadioButton(option.name)
+            button.setToolTip(option.description)
+            button.clicked.connect(lambda checked=False, grp_opt=self.group_selected, opt=option: self.handle_selection(grp_opt, opt))
+            button_group.addButton(button)
+            layout.addWidget(button)
+        button_none = QRadioButton("None")
+        button_none.toggle()
+        button_none.clicked.connect(lambda checked=False, grp_opt=self.group_selected: self.clear_selection(grp_opt))
+        button_group.addButton(button_none)
+        layout.addWidget(button_none)
+        return layout
+
+    def create_exact_button_layout(self, options):
+        layout = QVBoxLayout()
+        button_group = QButtonGroup(layout)
+        id = 0
+        for option in options:
+            button = QRadioButton(option.name)
+            button.setToolTip(option.description)
+            button.toggled.connect(lambda checked=False, grp_opt=self.group_selected, opt=option: self.handle_selection(grp_opt, opt))
+            button_group.addButton(button)
+            if id == 0:
+                button.toggle()
+            id += 1
+            layout.addWidget(button)
+        return layout
+
+    def handle_selection(self, group_options, option):
+        if len(group_options) == 0:
+            group_options.append(option)
             self.selected_options.append(option)
-            group_selected_options.append(option)
         else:
-            self.selected_options.remove(group_selected_options[0])
-            group_selected_options.clear()
+            self.selected_options.remove(group_options[0])
+            group_options.clear()
+            group_options.append(option)
             self.selected_options.append(option)
-            group_selected_options.append(option)
 
-    def clear_selection(self, group_selected_options):
-        self.selected_options.remove(group_selected_options[0])
-        group_selected_options.clear()
+    def clear_selection(self, grp_opt):
+        self.selected_options.remove(grp_opt[0])
+        grp_opt.clear()
 
     def add_selected_option(self, option):
         if option not in self.selected_options:
