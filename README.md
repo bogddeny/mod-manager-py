@@ -13,4 +13,4 @@ These are the packages required from your distribution's package manager
 
 ## Running the software
 
-```python main.py
+```python main.py```
