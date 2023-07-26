@@ -1,6 +1,7 @@
+import json
 import os
+import shutil
 import subprocess
-import pyfomod
 from subprocess import Popen, PIPE
 
 import logger
@@ -68,34 +69,18 @@ def extract(archive_path: str, extract_path: str):
         logger.log.debug("Failed to extract archive")
 
 
-""" TODO: Remove this later
-def fomod_test(path: str):
-    root = pyfomod.parse(path)
-    installer = pyfomod.Installer(root, path)
-    print(installer.files())
-    try:
-        page = installer.next()
+def copy_mod_install_files(json_string, path_from, path_to, mod_name):
+    data = json.loads(json_string)
 
-        if page is None:
-            print("Installer finished!")
+    for source, destination in data.items():
+        if not is_dir(path_from + source):
+            if not os.path.exists(path_to + mod_name + "/" + destination):
+                os.makedirs(path_to + mod_name + "/" + destination)
+            shutil.copy(path_from + source, path_to + mod_name + "/" + destination)
 
-        # Print the current page name
-        print("Current Page:", page.name)
 
-        # Iterate through the groups on the page
-        for group in page:
-            print("Group:", group.name)
-            print(group.type)
-
-            # Iterate through the options in the group
-            for option in group:
-                print("Option:", option.name)
-                print("Description:", option.description)
-
-        selected_option = "Curvy"
-        installer.next([opt])
-        print(installer.files())
-
-    except pyfomod.FailedCondition as e:
-        logger.log.debug(f"FailedCondition: {e}")
-"""
+def is_dir(path):
+    if os.path.isdir(path):
+        return True
+    else:
+        return False

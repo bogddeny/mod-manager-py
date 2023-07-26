@@ -1,3 +1,5 @@
+import json
+
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -16,6 +18,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 
 import pyfomod
+
+import filesystem
 import logger
 
 
@@ -73,18 +77,25 @@ class InstallerDialog(QDialog):
         super().__init__()
         self.setGeometry(0, 0, 1000, 600)
         self.selected_options = []
+        self.mod_name = ""
 
         main_layout = QVBoxLayout()
 
         installer = initialize_installer(path)
 
+        mod_info = pyfomod.parse(path)
+        self.mod_name = mod_info.name
+        print(self.mod_name)
+
         # Top Bar Layout
         top_layout = QHBoxLayout()
         main_layout.addLayout(top_layout)
         name_label = QLabel("Mod Name")
-        name_line_edit = QLineEdit()
+        self.name_line_edit = QLineEdit()
+        default_mod_name = mod_info.name + " " + mod_info.version
+        self.name_line_edit.setText(default_mod_name)
         top_layout.addWidget(name_label)
-        top_layout.addWidget(name_line_edit)
+        top_layout.addWidget(self.name_line_edit)
 
         # Main Content Layout
         center_layout = QHBoxLayout()
@@ -108,13 +119,21 @@ class InstallerDialog(QDialog):
         self.button_next.clicked.connect(lambda: self.next_page_layout(installer, self.selected_options))
         bottom_layout.addWidget(self.button_next)
         self.button_finish = QPushButton("Finish")
-        self.button_finish.clicked.connect(self.close)
+
+        path_to = "/home/bogdan/Documents/Projects/mod-manager-py/mods/"
+
+        self.button_finish.clicked.connect(lambda: self.handle_finish(installer.files(), path, path_to))
         self.button_finish.hide()
         bottom_layout.addWidget(self.button_finish)
 
         self.setLayout(main_layout)
 
         self.next_page_layout(installer, self.selected_options)
+
+    def handle_finish(self, files, path_from, path_to):
+        if len(self.name_line_edit.text()) > 0:
+            filesystem.copy_mod_install_files(json.dumps(files), path_from, path_to, self.name_line_edit.text())
+            self.close()
 
     def next_page_layout(self, installer, options):
         self.selected_options = []
