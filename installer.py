@@ -25,13 +25,11 @@ def initialize_installer(path):
     return installer
 
 
-def get_page(installer, options, previous=False):
+def get_page(installer, options):
     try:
-        if previous:
-            page = installer.previous()
-        else:
-            print_selected_options(options)
-            page = installer.next(options)
+        print_selected_options(options)
+        page = installer.next(options)
+
         if page is None:
             logger.log.debug("Installer Finished")
         else:
@@ -104,14 +102,15 @@ class InstallerDialog(QDialog):
         bottom_layout = QHBoxLayout()
         main_layout.addLayout(bottom_layout)
         button_cancel = QPushButton("Cancel")
-        button_cancel.clicked.connect(lambda: print_selected_options(self.selected_options))
+        button_cancel.clicked.connect(lambda: self.close())
         bottom_layout.addWidget(button_cancel)
-        button_previous = QPushButton("Previous")
-        button_previous.clicked.connect(lambda: print(installer.files()))
-        bottom_layout.addWidget(button_previous)
-        button_next = QPushButton("Next")
-        button_next.clicked.connect(lambda: self.next_page_layout(installer, self.selected_options))
-        bottom_layout.addWidget(button_next)
+        self.button_next = QPushButton("Next")
+        self.button_next.clicked.connect(lambda: self.next_page_layout(installer, self.selected_options))
+        bottom_layout.addWidget(self.button_next)
+        self.button_finish = QPushButton("Finish")
+        self.button_finish.clicked.connect(self.close)
+        self.button_finish.hide()
+        bottom_layout.addWidget(self.button_finish)
 
         self.setLayout(main_layout)
 
@@ -129,8 +128,6 @@ class InstallerDialog(QDialog):
 
         page = get_page(installer, options)
 
-        print(options)
-
         scroll_area = QScrollArea()
         page_widget = QWidget(scroll_area)
         scroll_area.setWidget(page_widget)
@@ -143,6 +140,8 @@ class InstallerDialog(QDialog):
             print(installer.files())
             finished_label = QLabel("Finished!")
             page_layout.addWidget(finished_label)
+            self.button_next.hide()
+            self.button_finish.show()
             return
 
         groups = get_groups(page)
@@ -175,44 +174,55 @@ class InstallerDialog(QDialog):
                     button.setToolTip(option.description)
                     button.setChecked(True)
                     button.setEnabled(False)
-                    button_group.addButton(button)
+                    button_group.addButton(button, id)
+                    id += 1
                     group_layout.addWidget(button)
                     self.add_option(option)
+
                 elif group.type is pyfomod.GroupType.ANY:
                     button = QCheckBox(option.name)
                     button.setToolTip(option.description)
-                    button.clicked.connect(lambda check=False, opt=option: self.toggle_option(opt))
-                    button_group.addButton(button)
+                    button.toggled.connect(lambda check=False, opt=option: self.toggle_option(opt))
+                    button_group.addButton(button, id)
+                    id += 1
                     group_layout.addWidget(button)
+
                 elif group.type is pyfomod.GroupType.ATLEASTONE:
                     button = QCheckBox(option.name)
                     button.setToolTip(option.description)
-                    button.clicked.connect(lambda check=False, opt=option: self.toggle_option(opt))
-                    button_group.addButton(button)
+                    button.toggled.connect(lambda check=False, opt=option: self.toggle_option(opt))
+                    button_group.addButton(button, id)
+                    id += 1
                     group_layout.addWidget(button)
+
                 elif group.type is pyfomod.GroupType.ATMOSTONE:
                     button = QRadioButton(option.name)
                     button.setToolTip(option.description)
                     button.toggled.connect(lambda checked=False, grp_opt=group_selected, opt=option: self.exclusive_option(grp_opt, opt))
-                    button_group.addButton(button)
+                    button_group.addButton(button, id)
+                    id += 1
                     group_layout.addWidget(button)
+
                 elif group.type is pyfomod.GroupType.EXACTLYONE:
                     button = QRadioButton(option.name)
                     button.setToolTip(option.description)
                     button.toggled.connect(lambda checked=False, grp_opt=group_selected, opt=option: self.exclusive_option(grp_opt, opt))
-                    button_group.addButton(button)
-                    if id == 0:
-                        button.toggle()
+                    button_group.addButton(button, id)
                     id += 1
                     group_layout.addWidget(button)
+
                 else:
                     logger.log.error("Invalid fomod GroupType")
+
+            if group.type is pyfomod.GroupType.EXACTLYONE:
+                button = button_group.button(0)
+                button.toggle()
 
             if group.type is pyfomod.GroupType.ATMOSTONE:
                 button_none = QRadioButton("None")
                 button_none.toggle()
                 button_none.clicked.connect(lambda checked=False, grp_opt=group_selected: self.clear_group_selected(grp_opt))
-                button_group.addButton(button_none)
+                button_group.addButton(button_none, id)
                 group_layout.addWidget(button_none)
 
             page_layout.addWidget(group_frame)
