@@ -20,8 +20,6 @@ PRIORITY_FILE = "profile/mods_priority.txt"
 
 
 class ExtractionThread(QThread):
-    finished = Signal()
-
     def __init__(self, archive_path: str, extract_path: str):
         super().__init__()
         self.archive_path = archive_path
@@ -29,7 +27,6 @@ class ExtractionThread(QThread):
 
     def run(self):
         filesystem.extract(self.archive_path, self.extract_path)
-        self.finished.emit()
 
 
 class MainWindow(QMainWindow):
@@ -45,11 +42,6 @@ class MainWindow(QMainWindow):
         self.install_button = QPushButton("Install Mod")
         self.install_button.clicked.connect(self.start_mod_installation)
         button_layout.addWidget(self.install_button)
-
-        fomod_button = QPushButton("fomod")
-        path = "/home/bogdan/Documents/Projects/mod-manager-py/.temp/"
-        fomod_button.clicked.connect(lambda: self.open_installer_dialog(path))
-        button_layout.addWidget(fomod_button)
 
         start_button = QPushButton("Start Game")
         button_layout.addWidget(start_button)
@@ -93,7 +85,6 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
     def open_installer_dialog(self, path: str):
-        # dialog = fomod.FomodDialog(path)
         dialog = installer.InstallerDialog(path)
         dialog.exec()
 
@@ -106,11 +97,14 @@ class MainWindow(QMainWindow):
             print("Selected File: ", file_path)
             self.install_button.setText("Installing")
             self.install_button.setEnabled(False)
-            extraction_thread = ExtractionThread(file_path, extract_to)
-            extraction_thread.finished.connect(self.on_extraction_thread_finished)
-            extraction_thread.start()
+            self.extraction_thread = ExtractionThread(file_path, extract_to)
+            self.extraction_thread.finished.connect(self.on_extraction_thread_finished)
+            self.extraction_thread.start()
 
     def on_extraction_thread_finished(self):
-        self.install_button.setText("Install Mod")
-        self.install_button.setEnabled(True)
+        if not self.extraction_thread.isRunning():
+            self.install_button.setText("Install Mod")
+            self.install_button.setEnabled(True)
+            path = "/home/bogdan/Documents/Projects/mod-manager-py/.temp/"
+            self.open_installer_dialog(path)
 

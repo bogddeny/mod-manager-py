@@ -51,6 +51,9 @@ def process_wait(process: Popen[bytes]):
 def extract(archive_path: str, extract_path: str):
     if not os.path.exists(extract_path):
         os.mkdir(extract_path)
+    else:
+        shutil.rmtree(extract_path)
+        os.mkdir(extract_path)
 
     if archive_path.endswith('.zip'):
         command = ["unzip", "-qq", archive_path, "-d", extract_path]
@@ -65,8 +68,45 @@ def extract(archive_path: str, extract_path: str):
     try:
         subprocess.run(command, check=True)
         logger.log.debug(f"Successfully extracted '{archive_path}' to '{extract_path}'.")
+        folder = find_path_in_directory("/home/bogdan/Documents/Projects/mod-manager-py/.temp/", "fomod")
+        if folder:
+            rename_to_lowercase(folder)
+            info = find_path_in_directory("/home/bogdan/Documents/Projects/mod-manager-py/.temp/fomod/", "info.xml")
+            rename_to_lowercase(info)
+            config = find_path_in_directory("/home/bogdan/Documents/Projects/mod-manager-py/.temp/fomod/", "moduleconfig.xml")
+            rename_to_lowercase(config)
+        print(f"FOLDER IS {folder}")
     except subprocess.CalledProcessError:
         logger.log.debug("Failed to extract archive")
+
+
+def find_path_in_directory(parent_dir, name):
+    for entry in os.listdir(parent_dir):
+        if entry.lower() == name.lower():
+            return os.path.join(parent_dir, entry)
+    return None
+
+
+def rename_to_lowercase(path):
+    if not os.path.exists(path):
+        print(f"Path '{path}' does not exist.")
+        return
+
+    parent_dir = os.path.dirname(path)
+    name = os.path.basename(path)
+    lowercase_name = name.lower()
+
+    if name != lowercase_name:
+        new_path = os.path.join(parent_dir, lowercase_name)
+
+        try:
+            os.rename(path, new_path)
+            print(f"'{name}' renamed to '{lowercase_name}'.")
+        except Exception as e:
+            print(f"Error while renaming: {e}")
+    else:
+        print(f"'{name}' is already in lowercase.")
+
 
 
 def copy_mod_install_files(json_string, path_from, path_to, mod_name):
